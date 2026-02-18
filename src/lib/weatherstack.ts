@@ -129,7 +129,38 @@ async function request<T>(
   }
 
   if (isWeatherstackError(json)) {
-    return { ok: false, message: json.error.info || 'Weatherstack error.', details: json.error }
+    const errorInfo = json.error.info || 'Weatherstack error.'
+    const errorCode = json.error.code
+    const errorType = json.error.type
+
+    // Check for plan limitation errors
+    const isPlanLimitation =
+      errorCode === 603 ||
+      errorType === 'historical_queries_not_supported_on_plan' ||
+      errorType === 'bulk_queries_not_supported_on_plan' ||
+      errorType === 'forecast_days_not_supported_on_plan' ||
+      errorInfo.toLowerCase().includes('subscription plan') ||
+      errorInfo.toLowerCase().includes('upgrade your account') ||
+      errorInfo.toLowerCase().includes('does not support')
+
+    if (isPlanLimitation) {
+      let planMessage = ''
+      if (errorType === 'historical_queries_not_supported_on_plan') {
+        planMessage = 'Historical weather data requires a Standard plan or higher.'
+      } else if (errorInfo.toLowerCase().includes('marine')) {
+        planMessage = 'Marine weather data requires a Professional plan or higher.'
+      } else {
+        planMessage = 'This feature requires a higher subscription plan.'
+      }
+
+      return {
+        ok: false,
+        message: `Plan Limitation: ${errorInfo}\n\n${planMessage} Your current plan only supports Current weather data.`,
+        details: json.error,
+      }
+    }
+
+    return { ok: false, message: errorInfo, details: json.error }
   }
 
   if (!res.ok) {

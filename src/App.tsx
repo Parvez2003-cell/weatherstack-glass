@@ -123,6 +123,22 @@ function App() {
         </header>
 
         <section className="glass card controls" aria-label="Filters">
+          {(mode === 'historical' || mode === 'marine') && (
+            <div
+              style={{
+                padding: '12px',
+                marginBottom: '12px',
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '14px',
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.85)',
+              }}
+            >
+              <strong>ℹ️ Plan Requirement:</strong> {mode === 'historical' ? 'Historical' : 'Marine'} weather data requires a{' '}
+              {mode === 'historical' ? 'Standard' : 'Professional'} plan or higher. Free plans only support Current weather.
+            </div>
+          )}
           <div className="row">
             {(mode === 'current' || mode === 'historical') && (
               <div className="field" style={{ gridColumn: 'span 12' }}>
@@ -176,7 +192,31 @@ function App() {
             </button>
           </div>
 
-          {error && <div className="error">{error}</div>}
+          {error && (
+            <div className="error">
+              <div style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{error}</div>
+              {error.includes('Plan Limitation') && (
+                <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '12px', fontSize: '12px' }}>
+                  <strong>Available Plans:</strong>
+                  <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                    <li>Free Plan: Current weather only</li>
+                    <li>Standard Plan: Current + Historical weather</li>
+                    <li>Professional Plan: All features including Marine weather</li>
+                  </ul>
+                  <div style={{ marginTop: '8px' }}>
+                    <a
+                      href="https://weatherstack.com/product"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'rgba(108, 213, 255, 0.9)', textDecoration: 'underline' }}
+                    >
+                      View plans and upgrade →
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="grid2" aria-label="Results">

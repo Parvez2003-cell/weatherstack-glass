@@ -62,12 +62,9 @@ export default async function handler(req, res) {
     const data = await response.json()
 
     // Check for Weatherstack error response
+    // Return in Weatherstack format so frontend can detect plan limitations
     if (data.success === false && data.error) {
-      return res.status(400).json({
-        error: data.error.info || 'Weatherstack API error',
-        code: data.error.code,
-        type: data.error.type,
-      })
+      return res.status(400).json(data) // Return full Weatherstack error format
     }
 
     // Return successful response
