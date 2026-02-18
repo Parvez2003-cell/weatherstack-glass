@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# Weather Glass - Weatherstack API App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A beautiful glassmorphic React app for fetching weather data from Weatherstack API.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## React Compiler
+2. **Configure API Key:**
+   - The API key is already set in `.env`: `827cfc90677841c49092f26883b6b5a6`
+   - For Vercel deployment, set `WEATHERSTACK_KEY` in Vercel dashboard (Environment Variables)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Development
 
-## Expanding the ESLint configuration
+**Important:** After changing `.env` file, you MUST restart the dev server:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Stop the current dev server (Ctrl+C)
+# Then restart:
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app will be available at `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## How It Works
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Local Development:** Vite proxy (`vite.config.ts`) intercepts `/api/*` requests and forwards them to Weatherstack API with your API key
+- **Production (Vercel):** Serverless functions in `/api/*` handle requests server-side
+
+## API Endpoints
+
+- `/api/weather` - Current weather
+- `/api/historical` - Historical weather  
+- `/api/marine` - Marine weather
+
+## Troubleshooting
+
+If you see "You have not supplied an API Access Key":
+
+1. **Restart the dev server** - Vite only loads `.env` on startup
+2. Check `.env` file exists and has `VITE_WEATHERSTACK_KEY=827cfc90677841c49092f26883b6b5a6`
+3. Verify no extra spaces around the `=` sign
+4. Check browser console and terminal for error messages
+
+## Build
+
+```bash
+npm run build
 ```
+
+## Deploy to Vercel
+
+1. Push to GitHub/GitLab
+2. Import project in Vercel
+3. **Set environment variable in Vercel Dashboard:**
+   - Go to Project Settings → Environment Variables
+   - Add: `WEATHERSTACK_KEY` = `827cfc90677841c49092f26883b6b5a6`
+   - **Important:** Use `WEATHERSTACK_KEY` (not `VITE_WEATHERSTACK_KEY`) for serverless functions
+4. Deploy
+
+**Note:** The serverless functions (`/api/*`) will automatically handle API requests server-side, keeping your API key secure.

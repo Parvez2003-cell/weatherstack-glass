@@ -82,10 +82,8 @@ function getEnv(name: string) {
 }
 
 function getConfig() {
-  const accessKey = getEnv('VITE_WEATHERSTACK_KEY')?.trim() ?? ''
-  const base = (getEnv('VITE_WEATHERSTACK_BASE')?.trim() || '/ws').replace(/\/$/, '')
   const units = (getEnv('VITE_WEATHERSTACK_UNITS')?.trim() || 'm') as 'm' | 'f' | 's'
-  return { accessKey, base, units }
+  return { units }
 }
 
 function isWeatherstackError(x: unknown): x is WeatherstackError {
@@ -95,21 +93,13 @@ function isWeatherstackError(x: unknown): x is WeatherstackError {
 }
 
 async function request<T>(
-  endpoint: '/current' | '/historical' | '/marine',
+  endpoint: '/api/weather' | '/api/historical' | '/api/marine',
   params: Record<string, string | number | boolean | undefined>,
 ): Promise<ApiResult<T>> {
-  const { accessKey, base, units } = getConfig()
+  const { units } = getConfig()
 
-  if (!accessKey || accessKey === 'PASTE_YOUR_WEATHERSTACK_KEY_HERE') {
-    return {
-      ok: false,
-      message:
-        'Missing API key. Set VITE_WEATHERSTACK_KEY in .env (see .env.example) and restart the dev server.',
-    }
-  }
-
-  const url = `${base}${endpoint}?${toQuery({
-    access_key: accessKey,
+  // Build API URL with query parameters
+  const url = `${endpoint}?${toQuery({
     units,
     ...params,
   })}`
@@ -118,7 +108,7 @@ async function request<T>(
   try {
     res = await fetch(url)
   } catch (e) {
-    return { ok: false, message: 'Network error while contacting Weatherstack.', details: e }
+    return { ok: false, message: 'Network error while contacting API proxy.', details: e }
   }
 
   let json: unknown
@@ -126,6 +116,16 @@ async function request<T>(
     json = await res.json()
   } catch (e) {
     return { ok: false, message: 'Failed to parse API response JSON.', details: e }
+  }
+
+  // Check for API proxy error response
+  if (json && typeof json === 'object' && 'error' in json && !('success' in json)) {
+    const errorObj = json as { error?: string; details?: unknown }
+    return {
+      ok: false,
+      message: errorObj.error || 'API proxy error.',
+      details: errorObj.details,
+    }
   }
 
   if (isWeatherstackError(json)) {
@@ -140,7 +140,7 @@ async function request<T>(
 }
 
 export function getCurrentWeather(query: string): Promise<ApiResult<WeatherstackCurrentResponse>> {
-  return request('/current', { query })
+  return request('/api/weather', { query })
 }
 
 export function getHistoricalWeather(
@@ -148,7 +148,12 @@ export function getHistoricalWeather(
   date: string,
   hourly = true,
 ): Promise<ApiResult<WeatherstackHistoricalResponse>> {
-  return request('/historical', { query, historical_date: date, hourly: hourly ? 1 : 0, interval: 1 })
+  return request('/api/historical', {
+    query,
+    historical_date: date,
+    hourly: hourly ? 1 : 0,
+    interval: 1,
+  })
 }
 
 export function getMarineWeather(
@@ -157,6 +162,6 @@ export function getMarineWeather(
   opts?: { tide?: boolean },
 ): Promise<ApiResult<WeatherstackMarineResponse>> {
   // Weatherstack accepts LatLon in "query" parameter (e.g. "40.78,-73.97").
-  return request('/marine', { query: `${lat},${lon}`, tide: opts?.tide ? 1 : 0 })
+  return request('/api/marine', { query: `${lat},${lon}`, tide: opts?.tide ? 1 : 0 })
 }
 
